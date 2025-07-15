@@ -1,0 +1,1 @@
+export const embedMap = () => console.log('Map embed activated.');

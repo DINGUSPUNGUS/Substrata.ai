@@ -1,0 +1,1 @@
+export const limiter = (req, res, next) => { console.log('Rate limited.'); next(); };

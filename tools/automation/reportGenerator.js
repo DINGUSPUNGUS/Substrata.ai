@@ -1,0 +1,1 @@
+export const generatePDFReport = (data) => console.log('Generating report PDF...');

@@ -1,0 +1,1 @@
+export const scheduleEmails = () => console.log('Email scheduler running...');

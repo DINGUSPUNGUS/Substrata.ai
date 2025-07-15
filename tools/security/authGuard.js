@@ -1,0 +1,1 @@
+export const guard = (req, res, next) => { console.log('Guarding route...'); next(); };
