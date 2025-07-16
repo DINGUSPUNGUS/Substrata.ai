@@ -16,10 +16,14 @@ import {
   AlertTriangle,
   User,
   Edit,
-  Trash2
+  Trash2,
+  Save,
+  X,
+  Award,
+  UserPlus
 } from 'lucide-react'
 
-const volunteers = [
+const initialVolunteers = [
   {
     id: 1,
     name: 'Emma Thompson',
@@ -145,10 +149,23 @@ const assignmentStatusColors = {
 }
 
 export default function Volunteers() {
+  const [volunteers, setVolunteers] = useState(initialVolunteers)
   const [activeTab, setActiveTab] = useState('volunteers')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterExperience, setFilterExperience] = useState('all')
+  const [showModal, setShowModal] = useState(false)
+  const [selectedVolunteer, setSelectedVolunteer] = useState(null)
+  const [editMode, setEditMode] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    skills: [],
+    experience: 'Beginner',
+    availability: [],
+    training: []
+  })
   
   const filteredVolunteers = volunteers
     .filter(volunteer => 
@@ -160,6 +177,64 @@ export default function Volunteers() {
        volunteer.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     )
+
+  const openModal = (volunteer = null) => {
+    if (volunteer) {
+      setSelectedVolunteer(volunteer)
+      setFormData(volunteer)
+      setEditMode(true)
+    } else {
+      setSelectedVolunteer(null)
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        skills: [],
+        experience: 'Beginner',
+        availability: [],
+        training: []
+      })
+      setEditMode(false)
+    }
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedVolunteer(null)
+    setEditMode(false)
+  }
+
+  const handleSave = () => {
+    if (editMode && selectedVolunteer) {
+      setVolunteers(volunteers.map(volunteer => 
+        volunteer.id === selectedVolunteer.id 
+          ? { ...formData, id: selectedVolunteer.id }
+          : volunteer
+      ))
+    } else {
+      const newVolunteer = {
+        ...formData,
+        id: Math.max(...volunteers.map(v => v.id)) + 1,
+        status: 'pending',
+        hours_logged: 0,
+        next_assignment: null,
+        joined: new Date().toISOString().split('T')[0]
+      }
+      setVolunteers([...volunteers, newVolunteer])
+    }
+    closeModal()
+  }
+
+  const deleteVolunteer = (volunteerId) => {
+    if (confirm('Are you sure you want to remove this volunteer?')) {
+      setVolunteers(volunteers.filter(volunteer => volunteer.id !== volunteerId))
+    }
+  }
+
+  const sendUpdates = () => {
+    alert('Updates sent to all active volunteers!')
+  }
 
   const totalVolunteers = volunteers.length
   const activeVolunteers = volunteers.filter(v => v.status === 'active').length
@@ -190,11 +265,17 @@ export default function Volunteers() {
               </div>
               
               <div className="flex space-x-3">
-                <button className="btn-secondary flex items-center">
+                <button 
+                  onClick={sendUpdates}
+                  className="btn-secondary flex items-center"
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Updates
                 </button>
-                <button className="btn-primary flex items-center">
+                <button 
+                  onClick={() => openModal()}
+                  className="btn-primary flex items-center"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Volunteer
                 </button>
@@ -356,10 +437,18 @@ export default function Volunteers() {
                         </div>
                         
                         <div className="flex items-center space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-conservation-600 hover:bg-conservation-50 rounded-md">
+                          <button 
+                            onClick={() => openModal(volunteer)}
+                            className="p-2 text-gray-400 hover:text-conservation-600 hover:bg-conservation-50 rounded-md"
+                            title="Edit Volunteer"
+                          >
                             <Edit className="h-4 w-4" />
                           </button>
-                          <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md">
+                          <button 
+                            onClick={() => deleteVolunteer(volunteer.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md"
+                            title="Remove Volunteer"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
@@ -412,7 +501,10 @@ export default function Volunteers() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-gray-900">Upcoming Assignments</h3>
-                  <button className="btn-primary flex items-center">
+                  <button 
+                    onClick={() => alert('Schedule Activity feature coming soon!')}
+                    className="btn-primary flex items-center"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Schedule Activity
                   </button>
@@ -490,6 +582,139 @@ export default function Volunteers() {
             )}
           </main>
         </div>
+
+        {/* Volunteer Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {editMode ? 'Edit Volunteer' : 'Add New Volunteer'}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                      placeholder="Enter email address"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Experience Level
+                    </label>
+                    <select
+                      value={formData.experience}
+                      onChange={(e) => setFormData({...formData, experience: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Experienced">Experienced</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Skills
+                    </label>
+                    <input
+                      type="text"
+                      value={Array.isArray(formData.skills) ? formData.skills.join(', ') : formData.skills || ''}
+                      onChange={(e) => setFormData({...formData, skills: e.target.value.split(',').map(skill => skill.trim())})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                      placeholder="Enter skills (comma separated)"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Availability
+                    </label>
+                    <input
+                      type="text"
+                      value={Array.isArray(formData.availability) ? formData.availability.join(', ') : formData.availability || ''}
+                      onChange={(e) => setFormData({...formData, availability: e.target.value.split(',').map(item => item.trim())})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                      placeholder="Enter availability (comma separated, e.g., weekends, mornings)"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Training Completed
+                    </label>
+                    <input
+                      type="text"
+                      value={Array.isArray(formData.training) ? formData.training.join(', ') : formData.training || ''}
+                      onChange={(e) => setFormData({...formData, training: e.target.value.split(',').map(item => item.trim())})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                      placeholder="Enter completed training (comma separated)"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={closeModal}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="px-4 py-2 bg-conservation-600 text-white rounded-md hover:bg-conservation-700 transition-colors flex items-center"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    {editMode ? 'Update Volunteer' : 'Add Volunteer'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

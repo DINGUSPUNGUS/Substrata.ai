@@ -151,11 +151,17 @@ export default function Donors() {
               </div>
               
               <div className="flex space-x-3">
-                <button className="btn-secondary flex items-center">
+                <button 
+                  onClick={() => alert('Donor update feature coming soon!')}
+                  className="btn-secondary flex items-center"
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Update
                 </button>
-                <button className="btn-primary flex items-center">
+                <button 
+                  onClick={() => alert('Add Donor feature coming soon!')}
+                  className="btn-primary flex items-center"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Donor
                 </button>
@@ -363,7 +369,10 @@ export default function Donors() {
                   Get started by adding your first donor.
                 </p>
                 <div className="mt-6">
-                  <button className="btn-primary">
+                  <button 
+                    onClick={() => alert('Add Donor feature coming soon!')}
+                    className="btn-primary"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Donor
                   </button>

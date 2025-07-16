@@ -182,11 +182,17 @@ export default function Reports() {
               </div>
               
               <div className="flex space-x-3">
-                <button className="btn-secondary flex items-center">
+                <button 
+                  onClick={() => alert('Analytics Dashboard feature coming soon!')}
+                  className="btn-secondary flex items-center"
+                >
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Analytics Dashboard
                 </button>
-                <button className="btn-primary flex items-center">
+                <button 
+                  onClick={() => alert('Report Generator feature coming soon!')}
+                  className="btn-primary flex items-center"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Generate Report
                 </button>
@@ -411,7 +417,10 @@ export default function Reports() {
                   Generate your first conservation impact report.
                 </p>
                 <div className="mt-6">
-                  <button className="btn-primary">
+                  <button 
+                    onClick={() => alert('Report Generator feature coming soon!')}
+                    className="btn-primary"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Generate Report
                   </button>
