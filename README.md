@@ -20,20 +20,39 @@ An advanced conservation automation platform for data collection, stakeholder ma
 
 ## Deployment
 
-### Vercel (Recommended)
+### Vercel (Recommended) - Zero Configuration
 
-1. Push code to GitHub
-2. Connect repository to Vercel
-3. Set environment variables in Vercel dashboard
-4. Deploy automatically
+The platform is pre-configured for Vercel and works immediately without any environment variables!
 
-### Environment Variables
+**Quick Deploy:**
+1. Go to [vercel.com](https://vercel.com) and sign up with GitHub
+2. Click "New Project" → Import `DINGUSPUNGUS/Substrata.ai`
+3. Click "Deploy" - That's it! 🚀
+
+**Command Line Deploy:**
+```bash
+npm install -g vercel
+vercel login
+vercel --prod
+```
+
+### Environment Variables (Optional Enhancement)
+
+The platform works perfectly without any environment variables. These are optional for enhanced features:
+
+**To add in Vercel Dashboard (Settings → Environment Variables):**
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key  
+NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_access_token
 ```
+
+**How to get these (optional):**
+- **Supabase**: [supabase.com](https://supabase.com) → Create project → Copy URL & API key
+- **Mapbox**: [mapbox.com](https://mapbox.com) → Get access token
+
+**Note:** The conservation platform includes sample data and works fully without external services.
 
 ## Tech Stack
 
