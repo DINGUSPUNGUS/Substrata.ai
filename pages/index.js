@@ -6,6 +6,8 @@ import DashboardCard from '../components/DashboardCard'
 import QuickActions from '../components/QuickActions'
 import RecentActivity from '../components/RecentActivity'
 import ConservationMetrics from '../components/ConservationMetrics'
+import ConservationHeatMap from '../components/ConservationHeatMap'
+import ProjectManagement from '../components/ProjectManagement'
 import { BarChart3, Users, MapPin, FileText, Calendar, TrendingUp } from 'lucide-react'
 
 export default function Dashboard() {
@@ -95,6 +97,16 @@ export default function Dashboard() {
               <div>
                 <QuickActions />
               </div>
+            </div>
+
+            {/* Heat Map Section */}
+            <div className="mb-8">
+              <ConservationHeatMap />
+            </div>
+
+            {/* Project Management Section */}
+            <div className="mb-8">
+              <ProjectManagement />
             </div>
 
             {/* Recent Activity */}
