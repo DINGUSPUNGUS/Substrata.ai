@@ -2,6 +2,14 @@
 
 An advanced conservation automation platform for data collection, stakeholder management, and impact reporting.
 
+## 🌐 **LIVE DEMO - Try It Now!**
+
+**🔗 Public URL**: https://substrata-ai-conservation-nlti7pxpt-hyphae.vercel.app
+
+✅ **Fully functional** - All features working  
+✅ **Mobile responsive** - Works on any device  
+✅ **Production ready** - Share with anyone  
+
 ## Features
 
 - 📊 **Real-time Dashboard** - Conservation metrics and KPIs
