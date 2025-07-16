@@ -36,6 +36,25 @@ vercel login
 vercel --prod
 ```
 
+### Custom Domain Setup
+
+**To use your own domain (e.g., Substrata-ai.com):**
+
+1. **Add domain in Vercel**: Dashboard → Project → Settings → Domains
+2. **Configure DNS** at your domain provider:
+   ```
+   Type: A, Name: @, Value: 76.76.19.61
+   Type: CNAME, Name: www, Value: cname.vercel-dns.com
+   ```
+3. **Wait for DNS propagation** (24-48 hours)
+4. **SSL certificate** is automatically issued by Vercel
+
+**Via CLI:**
+```bash
+vercel domains add substrata-ai.com
+vercel domains add www.substrata-ai.com
+```
+
 ### Environment Variables (Optional Enhancement)
 
 The platform works perfectly without any environment variables. These are optional for enhanced features:
