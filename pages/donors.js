@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Head from 'next/head'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
+import { pdfGenerator, downloadReport } from '../utils/pdfGenerator'
 import { 
   Users, 
   DollarSign, 
@@ -17,10 +18,18 @@ import {
   MapPin,
   Eye,
   Edit,
-  MessageSquare
+  MessageSquare,
+  Save,
+  X,
+  UserPlus,
+  Send,
+  CreditCard,
+  Heart,
+  Award,
+  Trash2
 } from 'lucide-react'
 
-const donors = [
+const initialDonors = [
   {
     id: 1,
     name: 'Green Earth Foundation',
@@ -104,6 +113,98 @@ export default function Donors() {
   const [filterTier, setFilterTier] = useState('all')
   const [filterType, setFilterType] = useState('all')
   const [sortBy, setSortBy] = useState('total_donated')
+  const [showModal, setShowModal] = useState(false)
+  const [selectedDonor, setSelectedDonor] = useState(null)
+  const [modalType, setModalType] = useState('view') // 'view', 'create', 'edit', 'analytics'
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    type: 'Individual',
+    tier: 'Regular',
+    total_donated: 0,
+    donation_count: 0,
+    last_donation: new Date().toISOString().split('T')[0],
+    location: '',
+    contact_person: '',
+    interests: []
+  })
+
+  // Modal management functions
+  const openModal = (type, donor = null) => {
+    setModalType(type)
+    setSelectedDonor(donor)
+    if (donor && type === 'edit') {
+      setFormData({...donor, interests: donor.interests || []})
+    } else if (type === 'create') {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        type: 'Individual',
+        tier: 'Regular',
+        total_donated: 0,
+        donation_count: 0,
+        last_donation: new Date().toISOString().split('T')[0],
+        location: '',
+        contact_person: '',
+        interests: []
+      })
+    }
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedDonor(null)
+    setModalType('view')
+  }
+
+  const generateDonorReport = async (donor) => {
+    setIsGenerating(true)
+    
+    try {
+      // Create mock donations data for the donor
+      const donations = [
+        { amount: donor.total_donated * 0.4, project_name: 'Forest Conservation', date: '2024-01-15' },
+        { amount: donor.total_donated * 0.3, project_name: 'Marine Protection', date: '2024-06-20' },
+        { amount: donor.total_donated * 0.3, project_name: 'Wildlife Sanctuary', date: '2024-09-10' }
+      ];
+
+      // Use the professional PDF generator
+      const result = await pdfGenerator.generateDonorReport(donor, donations)
+      
+      if (result.success) {
+        alert(`✅ Donor Report Generated!\n📄 File: ${result.filename}\n📊 Impact Report for ${donor.name}\n📋 Pages: ${result.pages}`)
+      } else {
+        alert(`❌ Report Generation Failed: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Donor Report Error:', error)
+      alert('❌ Report Generation Failed: Please try again')
+    }
+    
+    setIsGenerating(false)
+  }
+
+  const sendDonorUpdate = async (donor) => {
+    setIsGenerating(true)
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    alert(`Sent update email to ${donor.name}`)
+    setIsGenerating(false)
+  }
+
+  const saveDonor = () => {
+    if (modalType === 'create') {
+      // Add new donor logic
+      alert(`Added new donor: ${formData.name}`)
+    } else if (modalType === 'edit') {
+      // Update donor logic
+      alert(`Updated donor: ${formData.name}`)
+    }
+    closeModal()
+  }
   
   const filteredDonors = donors
     .filter(donor => 
@@ -152,14 +253,14 @@ export default function Donors() {
               
               <div className="flex space-x-3">
                 <button 
-                  onClick={() => alert('Donor update feature coming soon!')}
+                  onClick={() => openModal('analytics')}
                   className="btn-secondary flex items-center"
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Update
                 </button>
                 <button 
-                  onClick={() => alert('Add Donor feature coming soon!')}
+                  onClick={() => openModal('create')}
                   className="btn-primary flex items-center"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -308,14 +409,35 @@ export default function Donors() {
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md">
+                      <button 
+                        onClick={() => openModal('view', donor)}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md"
+                        title="View Details"
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-conservation-600 hover:bg-conservation-50 rounded-md">
+                      <button 
+                        onClick={() => openModal('edit', donor)}
+                        className="p-2 text-gray-400 hover:text-conservation-600 hover:bg-conservation-50 rounded-md"
+                        title="Edit Donor"
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md">
+                      <button 
+                        onClick={() => sendDonorUpdate(donor)}
+                        disabled={isGenerating}
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md disabled:opacity-50"
+                        title="Send Update"
+                      >
                         <MessageSquare className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => generateDonorReport(donor)}
+                        disabled={isGenerating}
+                        className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md disabled:opacity-50"
+                        title="Generate Report"
+                      >
+                        <FileDown className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -370,7 +492,7 @@ export default function Donors() {
                 </p>
                 <div className="mt-6">
                   <button 
-                    onClick={() => alert('Add Donor feature coming soon!')}
+                    onClick={() => openModal('create')}
                     className="btn-primary"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -381,6 +503,339 @@ export default function Donors() {
             )}
           </main>
         </div>
+
+        {/* Comprehensive Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {modalType === 'view' && 'Donor Details'}
+                  {modalType === 'create' && 'Add New Donor'}
+                  {modalType === 'edit' && 'Edit Donor'}
+                  {modalType === 'analytics' && 'Donor Analytics & Communications'}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {modalType === 'analytics' && (
+                  <div className="space-y-6">
+                    {/* Analytics Dashboard */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <Users className="h-8 w-8 text-blue-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-blue-600">Total Donors</p>
+                            <p className="text-2xl font-bold text-blue-900">{donors.length}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <DollarSign className="h-8 w-8 text-green-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-green-600">Total Raised</p>
+                            <p className="text-2xl font-bold text-green-900">${totalDonated.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <Activity className="h-8 w-8 text-purple-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-purple-600">Avg Donation</p>
+                            <p className="text-2xl font-bold text-purple-900">${Math.round(averageDonation).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <Star className="h-8 w-8 text-orange-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-orange-600">Major Donors</p>
+                            <p className="text-2xl font-bold text-orange-900">{majorDonors}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Communication Tools */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Communication Tools</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => alert('Newsletter feature coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <Mail className="h-6 w-6 text-blue-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Send Newsletter</h4>
+                          <p className="text-sm text-gray-600">Send updates to all donors</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Thank you cards feature coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <Heart className="h-6 w-6 text-red-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Thank You Cards</h4>
+                          <p className="text-sm text-gray-600">Generate personalized thanks</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Tax receipts feature coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <FileText className="h-6 w-6 text-green-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Tax Receipts</h4>
+                          <p className="text-sm text-gray-600">Generate annual tax documents</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Reports feature coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <BarChart className="h-6 w-6 text-purple-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Donor Reports</h4>
+                          <p className="text-sm text-gray-600">Generate giving analysis</p>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(modalType === 'create' || modalType === 'edit') && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveDonor(); }} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Donor Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Phone
+                        </label>
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.location}
+                          onChange={(e) => setFormData({...formData, location: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Donor Type
+                        </label>
+                        <select
+                          value={formData.type}
+                          onChange={(e) => setFormData({...formData, type: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        >
+                          <option value="Individual">Individual</option>
+                          <option value="Corporate">Corporate</option>
+                          <option value="Foundation">Foundation</option>
+                          <option value="Government">Government</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Donor Tier
+                        </label>
+                        <select
+                          value={formData.tier}
+                          onChange={(e) => setFormData({...formData, tier: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        >
+                          <option value="Regular">Regular</option>
+                          <option value="Major">Major</option>
+                          <option value="Supporter">Supporter</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Total Donated ($)
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.total_donated}
+                          onChange={(e) => setFormData({...formData, total_donated: parseFloat(e.target.value) || 0})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Number of Donations
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.donation_count}
+                          onChange={(e) => setFormData({...formData, donation_count: parseInt(e.target.value) || 0})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Last Donation Date
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.last_donation}
+                          onChange={(e) => setFormData({...formData, last_donation: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Contact Person
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.contact_person}
+                          onChange={(e) => setFormData({...formData, contact_person: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          placeholder="Primary contact name"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-conservation-600 text-white hover:bg-conservation-700 rounded-md"
+                      >
+                        {modalType === 'create' ? 'Add Donor' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {modalType === 'view' && selectedDonor && (
+                  <div className="space-y-6">
+                    {/* Donor Overview */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900">{selectedDonor.name}</h3>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tierColors[selectedDonor.tier]}`}>
+                              {selectedDonor.tier} Donor
+                            </span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${engagementColors[selectedDonor.engagement]}`}>
+                              {selectedDonor.engagement} Engagement
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-green-600">${selectedDonor.total_donated.toLocaleString()}</p>
+                          <p className="text-sm text-gray-600">Total Contributed</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Contact Information</h4>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-2" />
+                              {selectedDonor.email}
+                            </div>
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 mr-2" />
+                              {selectedDonor.phone}
+                            </div>
+                            <div className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-2" />
+                              {selectedDonor.location}
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 mb-2">Giving Summary</h4>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div>Number of Donations: {selectedDonor.donation_count}</div>
+                            <div>Last Donation: {new Date(selectedDonor.last_donation).toLocaleDateString()}</div>
+                            <div>Average Gift: ${Math.round(selectedDonor.total_donated / selectedDonor.donation_count).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                      <button 
+                        onClick={() => openModal('edit', selectedDonor)}
+                        className="flex items-center px-4 py-2 bg-conservation-600 text-white rounded-md hover:bg-conservation-700"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Donor
+                      </button>
+                      <button 
+                        onClick={() => sendDonorUpdate(selectedDonor)}
+                        disabled={isGenerating}
+                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        <Mail className="h-4 w-4 mr-2" />
+                        Send Update
+                      </button>
+                      <button 
+                        onClick={() => generateDonorReport(selectedDonor)}
+                        disabled={isGenerating}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Generate Report
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

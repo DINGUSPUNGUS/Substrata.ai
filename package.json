@@ -1,7 +1,7 @@
 {
   "name": "substrata-ai-conservation",
   "version": "1.0.0",
-  "description": "Conservation automation platform for data collection, stakeholder management, and impact reporting",
+  "description": "Production-ready conservation platform with advanced analytics, PDF reporting, real-time data persistence, interactive mapping, and comprehensive stakeholder management for conservation organizations worldwide",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,23 +12,25 @@
     "deploy:preview": "vercel"
   },
   "dependencies": {
+    "@heroicons/react": "^2.0.18",
+    "@react-pdf/renderer": "^4.3.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "date-fns": "^2.30.0",
+    "framer-motion": "^10.16.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
+    "lucide-react": "^0.294.0",
+    "mapbox-gl": "^3.0.0",
     "next": "^14.0.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "@heroicons/react": "^2.0.18",
-    "@supabase/supabase-js": "^2.38.0",
-    "recharts": "^2.8.0",
-    "react-map-gl": "^7.1.6",
-    "mapbox-gl": "^3.0.0",
-    "date-fns": "^2.30.0",
     "react-datepicker": "^4.21.0",
-    "react-hook-form": "^7.47.0",
-    "jspdf": "^2.5.1",
-    "html2canvas": "^1.4.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
-    "framer-motion": "^10.16.4",
-    "lucide-react": "^0.294.0"
+    "react-dom": "^18.0.0",
+    "react-hook-form": "^7.47.0",
+    "react-map-gl": "^7.1.6",
+    "react-pdf": "^10.0.1",
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.0.1",

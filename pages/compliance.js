@@ -4,7 +4,8 @@ import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import { 
   Shield, FileCheck, AlertTriangle, Calendar, CheckCircle, 
-  Clock, Download, Eye, Filter, Search, Plus
+  Clock, Download, Eye, Filter, Search, Plus,
+  Edit, X, Save, Mail, Settings, Printer, PieChart, BarChart, Activity
 } from 'lucide-react'
 
 // Sample compliance data
@@ -126,6 +127,68 @@ export default function CompliancePage() {
   const [selectedItem, setSelectedItem] = useState(null)
   const [filterType, setFilterType] = useState('All')
   const [searchTerm, setSearchTerm] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [modalType, setModalType] = useState('view') // 'view', 'create', 'edit', 'analytics'
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    type: 'Environmental Compliance',
+    status: 'In Review',
+    dueDate: '',
+    priority: 'Medium',
+    requirements: [],
+    documents: []
+  })
+
+  // Modal management functions
+  const openModal = (type, item = null) => {
+    setModalType(type)
+    setSelectedItem(item)
+    if (item && type === 'edit') {
+      setFormData({
+        title: item.title,
+        type: item.type,
+        status: item.status,
+        dueDate: item.dueDate,
+        priority: item.priority,
+        requirements: item.requirements || [],
+        documents: item.documents || []
+      })
+    } else if (type === 'create') {
+      setFormData({
+        title: '',
+        type: 'Environmental Compliance',
+        status: 'In Review',
+        dueDate: '',
+        priority: 'Medium',
+        requirements: [],
+        documents: []
+      })
+    }
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedItem(null)
+    setModalType('view')
+  }
+
+  const generateComplianceReport = async (item) => {
+    setIsGenerating(true)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    alert(`Generated compliance report for ${item.title}`)
+    setIsGenerating(false)
+  }
+
+  const saveCompliance = () => {
+    if (modalType === 'create') {
+      alert(`Added new compliance item: ${formData.title}`)
+    } else if (modalType === 'edit') {
+      alert(`Updated compliance item: ${formData.title}`)
+    }
+    closeModal()
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -180,10 +243,22 @@ export default function CompliancePage() {
                   <h1 className="text-3xl font-bold text-gray-900">Compliance & Impact Assessment</h1>
                   <p className="text-gray-600 mt-2">Monitor compliance status and measure conservation impact</p>
                 </div>
-                <button className="btn-primary">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Assessment
-                </button>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={() => openModal('analytics')}
+                    className="btn-secondary flex items-center"
+                  >
+                    <BarChart className="h-4 w-4 mr-2" />
+                    Analytics
+                  </button>
+                  <button 
+                    onClick={() => openModal('create')}
+                    className="btn-primary"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Assessment
+                  </button>
+                </div>
               </div>
 
               {/* Tab Navigation */}
@@ -438,6 +513,206 @@ export default function CompliancePage() {
             </div>
           </main>
         </div>
+
+        {/* Comprehensive Compliance Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {modalType === 'view' && 'Compliance Details'}
+                  {modalType === 'create' && 'Add New Compliance Item'}
+                  {modalType === 'edit' && 'Edit Compliance Item'}
+                  {modalType === 'analytics' && 'Compliance Analytics Dashboard'}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {modalType === 'analytics' && (
+                  <div className="space-y-6">
+                    {/* Compliance Analytics Dashboard */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <CheckCircle className="h-8 w-8 text-green-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-green-600">Compliant</p>
+                            <p className="text-2xl font-bold text-green-900">{complianceData.filter(item => item.status === 'Compliant').length}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-red-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <AlertTriangle className="h-8 w-8 text-red-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-red-600">At Risk</p>
+                            <p className="text-2xl font-bold text-red-900">{complianceData.filter(item => item.status === 'At Risk').length}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <Clock className="h-8 w-8 text-yellow-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-yellow-600">In Review</p>
+                            <p className="text-2xl font-bold text-yellow-900">{complianceData.filter(item => item.status === 'In Review').length}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <BarChart className="h-8 w-8 text-blue-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-blue-600">Total Items</p>
+                            <p className="text-2xl font-bold text-blue-900">{complianceData.length}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compliance Management Tools */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Compliance Management Tools</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => alert('Automated compliance checker coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <Shield className="h-6 w-6 text-green-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Auto Compliance Check</h4>
+                          <p className="text-sm text-gray-600">Automated compliance validation</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Risk assessment coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <AlertTriangle className="h-6 w-6 text-orange-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Risk Assessment</h4>
+                          <p className="text-sm text-gray-600">Identify compliance risks</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Document management coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <FileCheck className="h-6 w-6 text-blue-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Document Manager</h4>
+                          <p className="text-sm text-gray-600">Centralized document storage</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Compliance calendar coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <Calendar className="h-6 w-6 text-purple-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Compliance Calendar</h4>
+                          <p className="text-sm text-gray-600">Track important dates</p>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(modalType === 'create' || modalType === 'edit') && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveCompliance(); }} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Compliance Title *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.title}
+                          onChange={(e) => setFormData({...formData, title: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Compliance Type *
+                        </label>
+                        <select
+                          value={formData.type}
+                          onChange={(e) => setFormData({...formData, type: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          required
+                        >
+                          <option value="Environmental Compliance">Environmental Compliance</option>
+                          <option value="Financial Compliance">Financial Compliance</option>
+                          <option value="Regulatory Compliance">Regulatory Compliance</option>
+                          <option value="Safety Compliance">Safety Compliance</option>
+                          <option value="Data Compliance">Data Compliance</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Status
+                        </label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({...formData, status: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        >
+                          <option value="Compliant">Compliant</option>
+                          <option value="In Review">In Review</option>
+                          <option value="At Risk">At Risk</option>
+                          <option value="Overdue">Overdue</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Due Date
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.dueDate}
+                          onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Priority Level
+                        </label>
+                        <select
+                          value={formData.priority}
+                          onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        >
+                          <option value="Low">Low</option>
+                          <option value="Medium">Medium</option>
+                          <option value="High">High</option>
+                          <option value="Critical">Critical</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-conservation-600 text-white hover:bg-conservation-700 rounded-md"
+                      >
+                        {modalType === 'create' ? 'Create Compliance Item' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

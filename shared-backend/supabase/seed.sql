@@ -13,10 +13,10 @@ INSERT INTO users (id, email, name, role, profile) VALUES
 
 -- Insert sample species
 INSERT INTO species (id, scientific_name, common_name, taxonomy, conservation_status, description, habitat_preferences) VALUES 
-(uuid_generate_v4(), 'Canis lupus', 'Gray Wolf', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Mammalia", "order": "Carnivora", "family": "Canidae", "genus": "Canis"}', 'Least Concern', 'Large carnivorous mammal', ARRAY['Forest', 'Tundra', 'Grassland']),
-(uuid_generate_v4(), 'Ursus arctos', 'Brown Bear', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Mammalia", "order": "Carnivora", "family": "Ursidae", "genus": "Ursus"}', 'Least Concern', 'Large omnivorous mammal', ARRAY['Forest', 'Mountain', 'Coastal']),
-(uuid_generate_v4(), 'Aquila chrysaetos', 'Golden Eagle', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Aves", "order": "Accipitriformes", "family": "Accipitridae", "genus": "Aquila"}', 'Least Concern', 'Large bird of prey', ARRAY['Mountain', 'Desert', 'Grassland']),
-(uuid_generate_v4(), 'Alces alces', 'Moose', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Mammalia", "order": "Artiodactyla", "family": "Cervidae", "genus": "Alces"}', 'Least Concern', 'Largest member of deer family', ARRAY['Forest', 'Wetland', 'Boreal']);
+(NEWID(), 'Canis lupus', 'Gray Wolf', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Mammalia", "order": "Carnivora", "family": "Canidae", "genus": "Canis"}', 'Least Concern', 'Large carnivorous mammal', ARRAY['Forest', 'Tundra', 'Grassland']),
+(NEWID(), 'Ursus arctos', 'Brown Bear', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Mammalia", "order": "Carnivora", "family": "Ursidae", "genus": "Ursus"}', 'Least Concern', 'Large omnivorous mammal', ARRAY['Forest', 'Mountain', 'Coastal']),
+(NEWID(), 'Aquila chrysaetos', 'Golden Eagle', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Aves", "order": "Accipitriformes", "family": "Accipitridae", "genus": "Aquila"}', 'Least Concern', 'Large bird of prey', ARRAY['Mountain', 'Desert', 'Grassland']),
+(NEWID(), 'Alces alces', 'Moose', '{"kingdom": "Animalia", "phylum": "Chordata", "class": "Mammalia", "order": "Artiodactyla", "family": "Cervidae", "genus": "Alces"}', 'Least Concern', 'Largest member of deer family', ARRAY['Forest', 'Wetland', 'Boreal']);
 
 -- Insert sample survey sites
 INSERT INTO survey_sites (id, name, description, location, habitat_type, area_hectares, elevation_meters, established_date, status) VALUES 

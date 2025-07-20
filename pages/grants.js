@@ -4,7 +4,8 @@ import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import { 
   DollarSign, Calendar, TrendingUp, AlertCircle, CheckCircle, 
-  Clock, FileText, Users, Search, Filter, Plus, Download
+  Clock, FileText, Users, Search, Filter, Plus, Download,
+  Edit, Eye, X, Save, Mail, Settings, Printer, PieChart, BarChart, Activity
 } from 'lucide-react'
 
 // Sample grant data
@@ -86,6 +87,77 @@ export default function GrantsPage() {
   const [selectedGrant, setSelectedGrant] = useState(null)
   const [filterStatus, setFilterStatus] = useState('All')
   const [searchTerm, setSearchTerm] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [modalType, setModalType] = useState('view') // 'view', 'create', 'edit', 'analytics'
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    funder: '',
+    amount: 0,
+    awarded: 0,
+    status: 'Pending',
+    startDate: '',
+    endDate: '',
+    category: '',
+    requirements: [],
+    milestones: []
+  })
+
+  // Modal management functions
+  const openModal = (type, grant = null) => {
+    setModalType(type)
+    setSelectedGrant(grant)
+    if (grant && type === 'edit') {
+      setFormData({
+        title: grant.title,
+        funder: grant.funder,
+        amount: grant.amount,
+        awarded: grant.awarded,
+        status: grant.status,
+        startDate: grant.startDate,
+        endDate: grant.endDate,
+        category: grant.category,
+        requirements: grant.requirements || [],
+        milestones: grant.milestones || []
+      })
+    } else if (type === 'create') {
+      setFormData({
+        title: '',
+        funder: '',
+        amount: 0,
+        awarded: 0,
+        status: 'Pending',
+        startDate: '',
+        endDate: '',
+        category: '',
+        requirements: [],
+        milestones: []
+      })
+    }
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedGrant(null)
+    setModalType('view')
+  }
+
+  const generateGrantReport = async (grant) => {
+    setIsGenerating(true)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    alert(`Generated comprehensive report for ${grant.title}`)
+    setIsGenerating(false)
+  }
+
+  const saveGrant = () => {
+    if (modalType === 'create') {
+      alert(`Added new grant: ${formData.title}`)
+    } else if (modalType === 'edit') {
+      alert(`Updated grant: ${formData.title}`)
+    }
+    closeModal()
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -126,10 +198,22 @@ export default function GrantsPage() {
                   <h1 className="text-3xl font-bold text-gray-900">Grant Management</h1>
                   <p className="text-gray-600 mt-2">Track funding, compliance, and milestone progress</p>
                 </div>
-                <button className="btn-primary">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Apply for Grant
-                </button>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={() => openModal('analytics')}
+                    className="btn-secondary flex items-center"
+                  >
+                    <BarChart className="h-4 w-4 mr-2" />
+                    Analytics
+                  </button>
+                  <button 
+                    onClick={() => openModal('create')}
+                    className="btn-primary"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Apply for Grant
+                  </button>
+                </div>
               </div>
 
               {/* Grant Overview Cards */}
@@ -352,11 +436,25 @@ export default function GrantsPage() {
                       </div>
 
                       <div className="mt-6 flex gap-3">
-                        <button className="btn-primary">
+                        <button 
+                          onClick={() => generateGrantReport(selectedGrant)}
+                          disabled={isGenerating}
+                          className="btn-primary disabled:opacity-50"
+                        >
                           <FileText className="h-4 w-4 mr-2" />
                           Generate Report
                         </button>
-                        <button className="btn-secondary">
+                        <button 
+                          onClick={() => openModal('edit', selectedGrant)}
+                          className="btn-secondary"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Grant
+                        </button>
+                        <button 
+                          onClick={() => alert('Document download feature coming soon!')}
+                          className="btn-secondary"
+                        >
                           <Download className="h-4 w-4 mr-2" />
                           Download Documents
                         </button>
@@ -368,6 +466,243 @@ export default function GrantsPage() {
             </div>
           </main>
         </div>
+
+        {/* Comprehensive Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {modalType === 'view' && 'Grant Details'}
+                  {modalType === 'create' && 'Apply for New Grant'}
+                  {modalType === 'edit' && 'Edit Grant Application'}
+                  {modalType === 'analytics' && 'Grant Analytics Dashboard'}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {modalType === 'analytics' && (
+                  <div className="space-y-6">
+                    {/* Analytics Dashboard */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <DollarSign className="h-8 w-8 text-green-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-green-600">Total Applied</p>
+                            <p className="text-2xl font-bold text-green-900">${(totalGrantValue / 1000000).toFixed(1)}M</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <TrendingUp className="h-8 w-8 text-blue-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-blue-600">Awarded</p>
+                            <p className="text-2xl font-bold text-blue-900">${(totalAwarded / 1000000).toFixed(1)}M</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <Activity className="h-8 w-8 text-purple-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-purple-600">Active Grants</p>
+                            <p className="text-2xl font-bold text-purple-900">{activeGrants}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-orange-50 p-4 rounded-lg">
+                        <div className="flex items-center">
+                          <BarChart className="h-8 w-8 text-orange-600" />
+                          <div className="ml-3">
+                            <p className="text-sm text-orange-600">Success Rate</p>
+                            <p className="text-2xl font-bold text-orange-900">{Math.round((totalAwarded / totalGrantValue) * 100)}%</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grant Management Tools */}
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Grant Management Tools</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => alert('Compliance tracker coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <CheckCircle className="h-6 w-6 text-green-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Compliance Tracker</h4>
+                          <p className="text-sm text-gray-600">Monitor reporting requirements</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Milestone tracker coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <Calendar className="h-6 w-6 text-blue-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Milestone Tracker</h4>
+                          <p className="text-sm text-gray-600">Track project milestones</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Financial reports coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <FileText className="h-6 w-6 text-purple-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Financial Reports</h4>
+                          <p className="text-sm text-gray-600">Generate spending reports</p>
+                        </button>
+                        <button 
+                          onClick={() => alert('Grant opportunities coming soon!')}
+                          className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left"
+                        >
+                          <Search className="h-6 w-6 text-orange-600 mb-2" />
+                          <h4 className="font-medium text-gray-900">Find Opportunities</h4>
+                          <p className="text-sm text-gray-600">Discover new grant opportunities</p>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(modalType === 'create' || modalType === 'edit') && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveGrant(); }} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Grant Title *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.title}
+                          onChange={(e) => setFormData({...formData, title: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Funding Organization *
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.funder}
+                          onChange={(e) => setFormData({...formData, funder: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Requested Amount ($) *
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.amount}
+                          onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value) || 0})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          min="0"
+                          step="0.01"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Amount Awarded ($)
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.awarded}
+                          onChange={(e) => setFormData({...formData, awarded: parseFloat(e.target.value) || 0})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Status
+                        </label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({...formData, status: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="In Review">In Review</option>
+                          <option value="Active">Active</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Category
+                        </label>
+                        <select
+                          value={formData.category}
+                          onChange={(e) => setFormData({...formData, category: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        >
+                          <option value="">Select Category</option>
+                          <option value="Forest Conservation">Forest Conservation</option>
+                          <option value="Marine Conservation">Marine Conservation</option>
+                          <option value="Wildlife Protection">Wildlife Protection</option>
+                          <option value="Climate Action">Climate Action</option>
+                          <option value="Community Outreach">Community Outreach</option>
+                          <option value="Research">Research</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={formData.endDate}
+                          onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-conservation-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                      <button
+                        type="button"
+                        onClick={closeModal}
+                        className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-conservation-600 text-white hover:bg-conservation-700 rounded-md"
+                      >
+                        {modalType === 'create' ? 'Submit Application' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

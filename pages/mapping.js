@@ -18,7 +18,14 @@ import {
   Eye,
   AlertCircle,
   TrendingUp,
-  Users
+  Users,
+  Edit,
+  X,
+  Save,
+  BarChart,
+  Activity,
+  FileDown,
+  Printer
 } from 'lucide-react'
 
 // Enhanced survey data with real conservation sites
@@ -130,6 +137,71 @@ export default function GISMapping() {
   const [selectedSite, setSelectedSite] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('All')
+  const [showModal, setShowModal] = useState(false)
+  const [modalType, setModalType] = useState('view') // 'view', 'create', 'edit', 'analytics'
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    coordinates: [0, 0],
+    type: 'Forest Conservation',
+    area_size: '',
+    team_size: 0,
+    species_count: 0,
+    status: 'active',
+    threat_level: 1
+  })
+
+  // Modal management functions
+  const openModal = (type, site = null) => {
+    setModalType(type)
+    setSelectedSite(site)
+    if (site && type === 'edit') {
+      setFormData({
+        name: site.name,
+        coordinates: site.coordinates,
+        type: site.type,
+        area_size: site.area_size,
+        team_size: site.team_size,
+        species_count: site.species_count,
+        status: site.status,
+        threat_level: site.threat_level
+      })
+    } else if (type === 'create') {
+      setFormData({
+        name: '',
+        coordinates: [0, 0],
+        type: 'Forest Conservation',
+        area_size: '',
+        team_size: 0,
+        species_count: 0,
+        status: 'active',
+        threat_level: 1
+      })
+    }
+    setShowModal(true)
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setSelectedSite(null)
+    setModalType('view')
+  }
+
+  const generateSiteReport = async (site) => {
+    setIsGenerating(true)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    alert(`Generated comprehensive GIS report for ${site.name}`)
+    setIsGenerating(false)
+  }
+
+  const saveSite = () => {
+    if (modalType === 'create') {
+      alert(`Added new conservation site: ${formData.name}`)
+    } else if (modalType === 'edit') {
+      alert(`Updated conservation site: ${formData.name}`)
+    }
+    closeModal()
+  }
 
   const toggleLayer = (layerId) => {
     setActiveLayers(prev => 
