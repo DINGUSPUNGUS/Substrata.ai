@@ -109,6 +109,7 @@ const engagementColors = {
 }
 
 export default function Donors() {
+  const [donors, setDonors] = useState(initialDonors)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTier, setFilterTier] = useState('all')
   const [filterType, setFilterType] = useState('all')
