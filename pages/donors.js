@@ -96,19 +96,20 @@ const initialDonors = [
   }
 ]
 
-const tierColors = {
-  Major: 'bg-purple-100 text-purple-800',
-  Regular: 'bg-blue-100 text-blue-800',
-  Supporter: 'bg-green-100 text-green-800'
-}
-
-const engagementColors = {
-  High: 'bg-green-100 text-green-800',
-  Medium: 'bg-yellow-100 text-yellow-800',
-  Low: 'bg-red-100 text-red-800'
-}
-
 export default function Donors() {
+  // Move constants inside component to fix SSG
+  const tierColors = {
+    Major: 'bg-purple-100 text-purple-800',
+    Regular: 'bg-blue-100 text-blue-800',
+    Supporter: 'bg-green-100 text-green-800'
+  }
+
+  const engagementColors = {
+    High: 'bg-green-100 text-green-800',
+    Medium: 'bg-yellow-100 text-yellow-800',
+    Low: 'bg-red-100 text-red-800'
+  }
+
   const [donors, setDonors] = useState(initialDonors)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTier, setFilterTier] = useState('all')
@@ -840,4 +841,12 @@ export default function Donors() {
       </div>
     </>
   )
+}
+
+// Use server-side rendering to avoid static generation issues
+export async function getStaticProps() {
+  return { 
+    props: {},
+    revalidate: 60 // ISR - regenerate every 60 seconds
+  }
 }
