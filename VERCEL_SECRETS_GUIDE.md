@@ -1,24 +1,26 @@
 # Vercel Project Configuration Verification Guide
 
-## Your Actual Project IDs (from .vercel/project.json):
-- **Project ID**: `prj_DCpw3vw1hMjtWINxa24rOhXTUETD`
+# Vercel Project Configuration Verification Guide
+
+## Your Actual Project IDs:
+- **Project ID**: `prj_BnfNZj87vY89neD5e6zBKfhA9ILg`
 - **Organization ID**: `team_81F8nZMv4Mx34I9rC2KRMTI3`
+- **Vercel Token**: `BA5bI5qDysrjmRJNT6BhyU9z`
 
 ## GitHub Repository Secrets Required:
 
 Please verify these secrets are set correctly in your GitHub repository:
 
 ### 1. VERCEL_TOKEN
+- **Required Value**: `BA5bI5qDysrjmRJNT6BhyU9z`
 - **Description**: Your Vercel authentication token
-- **How to get**: Go to Vercel Dashboard → Settings → Tokens → Create new token
-- **Format**: Starts with `token_` followed by alphanumeric characters
 
 ### 2. VERCEL_ORG_ID  
 - **Required Value**: `team_81F8nZMv4Mx34I9rC2KRMTI3`
 - **Description**: Your Vercel team/organization ID
 
 ### 3. VERCEL_PROJECT_ID
-- **Required Value**: `prj_DCpw3vw1hMjtWINxa24rOhXTUETD`  
+- **Required Value**: `prj_BnfNZj87vY89neD5e6zBKfhA9ILg`  
 - **Description**: Your specific Vercel project ID
 
 ## To Update GitHub Secrets:
