@@ -158,7 +158,7 @@ END $$;
 -- This section will attempt to add all missing deleted_at columns
 DO $$
 DECLARE
-  table_name TEXT;
+  table_name_var TEXT;
   table_list TEXT[] := ARRAY['user_profiles', 'projects', 'surveys', 'project_members', 
                              'survey_forms', 'species_observations', 'stakeholder_interactions', 
                              'email_campaigns'];
@@ -167,23 +167,23 @@ BEGIN
   RAISE NOTICE '🔧 ATTEMPTING AUTOMATIC FIX FOR DELETED_AT COLUMNS';
   RAISE NOTICE '================================================';
   
-  FOREACH table_name IN ARRAY table_list
+  FOREACH table_name_var IN ARRAY table_list
   LOOP
     -- Check if table exists and column is missing
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = table_name) THEN
-      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = table_name AND column_name = 'deleted_at') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = table_name_var) THEN
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = table_name_var AND column_name = 'deleted_at') THEN
         BEGIN
-          EXECUTE format('ALTER TABLE public.%I ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE', table_name);
-          RAISE NOTICE '✅ SUCCESS: Added deleted_at to %', table_name;
+          EXECUTE format('ALTER TABLE public.%I ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE', table_name_var);
+          RAISE NOTICE '✅ SUCCESS: Added deleted_at to %', table_name_var;
         EXCEPTION
           WHEN OTHERS THEN
-            RAISE NOTICE '❌ FAILED: Could not add deleted_at to % - %', table_name, SQLERRM;
+            RAISE NOTICE '❌ FAILED: Could not add deleted_at to % - %', table_name_var, SQLERRM;
         END;
       ELSE
-        RAISE NOTICE 'ℹ️ SKIP: deleted_at already exists in %', table_name;
+        RAISE NOTICE 'ℹ️ SKIP: deleted_at already exists in %', table_name_var;
       END IF;
     ELSE
-      RAISE NOTICE '⚠️ SKIP: Table % does not exist', table_name;
+      RAISE NOTICE '⚠️ SKIP: Table % does not exist', table_name_var;
     END IF;
   END LOOP;
   
