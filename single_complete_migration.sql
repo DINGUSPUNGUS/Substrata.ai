@@ -3,6 +3,49 @@
 -- Run this ONCE in Supabase SQL Editor
 
 -- ========================================
+-- 0. DIAGNOSTIC: CHECK CURRENT SCHEMA STATE
+-- ========================================
+DO $$
+DECLARE
+  table_record RECORD;
+  column_record RECORD;
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '🔍 CURRENT DATABASE SCHEMA DIAGNOSTIC';
+  RAISE NOTICE '=====================================';
+  
+  -- Check which critical tables exist
+  RAISE NOTICE '📋 Existing tables:';
+  FOR table_record IN
+    SELECT tablename
+    FROM pg_tables 
+    WHERE schemaname = 'public'
+    AND tablename IN ('user_profiles', 'projects', 'surveys', 'project_members', 
+                      'survey_forms', 'species_observations', 'stakeholder_interactions', 
+                      'email_campaigns', 'activity_logs')
+    ORDER BY tablename
+  LOOP
+    RAISE NOTICE '  ✅ Table: %', table_record.tablename;
+    
+    -- Check for critical columns
+    FOR column_record IN
+      SELECT column_name, data_type
+      FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = table_record.tablename
+      AND column_name IN ('created_by', 'deleted_at', 'organization')
+      ORDER BY column_name
+    LOOP
+      RAISE NOTICE '    - Column: % (type: %)', column_record.column_name, column_record.data_type;
+    END LOOP;
+  END LOOP;
+  
+  RAISE NOTICE '';
+  RAISE NOTICE '🔧 Starting schema migration...';
+  RAISE NOTICE '';
+END $$;
+
+-- ========================================
 -- 1. CREATE EXTENSIONS
 -- ========================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -53,12 +96,38 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'created_by') THEN
     ALTER TABLE public.surveys ADD COLUMN created_by UUID REFERENCES auth.users(id);
     RAISE NOTICE '✅ Added created_by to surveys';
+  ELSE
+    RAISE NOTICE 'ℹ️ Column created_by already exists in surveys';
   END IF;
   
   -- Add soft delete column
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'deleted_at') THEN
     ALTER TABLE public.surveys ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE;
     RAISE NOTICE '✅ Added deleted_at to surveys';
+  ELSE
+    RAISE NOTICE 'ℹ️ Column deleted_at already exists in surveys';
+  END IF;
+END $$;
+
+-- Add missing columns to user_profiles (including deleted_at)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_profiles' AND column_name = 'deleted_at') THEN
+    ALTER TABLE public.user_profiles ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE;
+    RAISE NOTICE '✅ Added deleted_at to user_profiles';
+  ELSE
+    RAISE NOTICE 'ℹ️ Column deleted_at already exists in user_profiles';
+  END IF;
+END $$;
+
+-- Add missing columns to projects (including deleted_at)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'deleted_at') THEN
+    ALTER TABLE public.projects ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE;
+    RAISE NOTICE '✅ Added deleted_at to projects';
+  ELSE
+    RAISE NOTICE 'ℹ️ Column deleted_at already exists in projects';
   END IF;
 END $$;
 
@@ -70,8 +139,43 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'activity_logs' AND column_name = 'created_by') THEN
       ALTER TABLE public.activity_logs ADD COLUMN created_by UUID REFERENCES auth.users(id);
       RAISE NOTICE '✅ Added created_by to activity_logs';
+    ELSE
+      RAISE NOTICE 'ℹ️ Column created_by already exists in activity_logs';
     END IF;
   END IF;
+END $$;
+
+-- ========================================
+-- 2.5. COMPREHENSIVE DELETED_AT COLUMN ADDITION  
+-- ========================================
+-- Add deleted_at to ALL tables that need soft delete functionality
+DO $$
+DECLARE
+  table_name TEXT;
+  table_list TEXT[] := ARRAY['user_profiles', 'projects', 'surveys', 'project_members'];
+BEGIN
+  RAISE NOTICE '🗑️ Adding soft delete columns to existing tables...';
+  
+  FOREACH table_name IN ARRAY table_list
+  LOOP
+    -- Check if table exists first
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = table_name) THEN
+      -- Check if deleted_at column exists
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = table_name AND column_name = 'deleted_at') THEN
+        BEGIN
+          EXECUTE format('ALTER TABLE public.%I ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE', table_name);
+          RAISE NOTICE '✅ Added deleted_at to %', table_name;
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE NOTICE '⚠️ Failed to add deleted_at to %: %', table_name, SQLERRM;
+        END;
+      ELSE
+        RAISE NOTICE 'ℹ️ Column deleted_at already exists in %', table_name;
+      END IF;
+    ELSE
+      RAISE NOTICE 'ℹ️ Table % does not exist, will be created later', table_name;
+    END IF;
+  END LOOP;
 END $$;
 
 -- ========================================
@@ -501,6 +605,7 @@ DECLARE
   table_list TEXT[] := ARRAY['user_profiles', 'projects', 'surveys', 'project_members', 
                              'survey_forms', 'species_observations', 'stakeholder_interactions', 
                              'email_campaigns', 'activity_logs'];
+  column_exists BOOLEAN;
 BEGIN
   RAISE NOTICE '';
   RAISE NOTICE '🔒 COMPREHENSIVE SECURITY & PERFORMANCE REPORT';
@@ -522,7 +627,45 @@ BEGIN
     END;
   END LOOP;
   
+  -- Verify deleted_at columns exist where needed
+  RAISE NOTICE '';
+  RAISE NOTICE '🗑️ SOFT DELETE COLUMN VERIFICATION:';
+  FOR table_record IN
+    SELECT tablename
+    FROM pg_tables 
+    WHERE schemaname = 'public'
+    AND tablename IN ('user_profiles', 'projects', 'surveys', 'project_members', 
+                      'survey_forms', 'species_observations', 'stakeholder_interactions', 
+                      'email_campaigns')
+    ORDER BY tablename
+  LOOP
+    -- Check if deleted_at column exists
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_schema = 'public' 
+      AND table_name = table_record.tablename 
+      AND column_name = 'deleted_at'
+    ) INTO column_exists;
+    
+    IF column_exists THEN
+      RAISE NOTICE '✅ %: deleted_at column EXISTS', table_record.tablename;
+    ELSE
+      RAISE NOTICE '❌ %: deleted_at column MISSING', table_record.tablename;
+      
+      -- Try to add the missing column
+      BEGIN
+        EXECUTE format('ALTER TABLE public.%I ADD COLUMN deleted_at TIMESTAMP WITH TIME ZONE', table_record.tablename);
+        RAISE NOTICE '🔧 Fixed: Added deleted_at to %', table_record.tablename;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE NOTICE '⚠️ Could not add deleted_at to %: %', table_record.tablename, SQLERRM;
+      END;
+    END IF;
+  END LOOP;
+  
   -- Check security status for each critical table
+  RAISE NOTICE '';
+  RAISE NOTICE '🔐 TABLE SECURITY STATUS:';
   FOR table_record IN
     SELECT tablename
     FROM pg_tables 
@@ -645,6 +788,7 @@ BEGIN
     RAISE NOTICE '⚠️  Migration completed with issues - review above';
     RAISE NOTICE '📋 Manual verification recommended:';
     RAISE NOTICE '   SELECT schemaname, tablename, rowsecurity FROM pg_tables WHERE schemaname = ''public'';';
+    RAISE NOTICE '   SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = ''public'' AND column_name = ''deleted_at'';';
   END IF;
   
   RAISE NOTICE '';
@@ -653,4 +797,11 @@ BEGIN
   RAISE NOTICE '- Partial indexes for soft delete queries';
   RAISE NOTICE '- GIN indexes for full-text search';
   RAISE NOTICE '- Optimized RLS policies with auth.uid() caching';
+  
+  RAISE NOTICE '';
+  RAISE NOTICE '🛠️ TROUBLESHOOTING COMMANDS:';
+  RAISE NOTICE 'If you still encounter deleted_at column issues, run:';
+  RAISE NOTICE '1. Check existing columns: SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = ''public'' AND column_name = ''deleted_at'';';
+  RAISE NOTICE '2. Check table permissions: SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE table_schema = ''public'';';
+  RAISE NOTICE '3. Verify table existence: SELECT tablename FROM pg_tables WHERE schemaname = ''public'';';
 END $$;
