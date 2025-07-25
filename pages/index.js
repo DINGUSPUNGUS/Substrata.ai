@@ -1,7 +1,57 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, useMemo } from 'react'
 import { Leaf, MapPin, Users, BarChart3, Database, Calendar, FileText, Globe, Shield, Zap, ChevronRight, Play, CheckCircle, Star, ArrowRight } from 'lucide-react'
+
+// Memoized feature card component for better performance
+const FeatureCard = memo(function FeatureCard({ icon, title, description, color }) {
+  return (
+    <div className="group p-8 rounded-2xl border border-gray-200 hover:border-conservation-300 transition-all duration-300 hover:shadow-xl bg-white">
+      <div className={`inline-flex p-3 rounded-xl ${color} text-white mb-6 group-hover:scale-110 transition-transform duration-300`}>
+        {icon}
+      </div>
+      <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-conservation-600 transition-colors">
+        {title}
+      </h3>
+      <p className="text-gray-600 leading-relaxed">
+        {description}
+      </p>
+    </div>
+  )
+})
+
+// Memoized stats component
+const StatCard = memo(function StatCard({ number, label, suffix = '' }) {
+  return (
+    <div className="text-center">
+      <div className="text-3xl lg:text-4xl font-bold text-conservation-600 mb-2">
+        {number}{suffix}
+      </div>
+      <div className="text-gray-600 font-medium">{label}</div>
+    </div>
+  )
+})
+
+// Memoized testimonial component
+const TestimonialCard = memo(function TestimonialCard({ testimonial }) {
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-8">
+      <div className="flex items-center mb-4">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+        ))}
+      </div>
+      <blockquote className="text-gray-700 text-lg mb-6">
+        "{testimonial.quote}"
+      </blockquote>
+      <div>
+        <div className="font-semibold text-gray-900">{testimonial.author}</div>
+        <div className="text-gray-600">{testimonial.role}</div>
+        <div className="text-green-600 font-medium">{testimonial.organization}</div>
+      </div>
+    </div>
+  )
+})
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false)
@@ -10,7 +60,8 @@ export default function Home() {
     setIsVisible(true)
   }, [])
 
-  const features = [
+  // Memoize features array to prevent re-renders
+  const features = useMemo(() => [
     {
       icon: <MapPin className="h-8 w-8" />,
       title: "Interactive GIS Mapping",
@@ -38,37 +89,27 @@ export default function Home() {
     {
       icon: <FileText className="h-8 w-8" />,
       title: "Custom Survey Builder",
-      description: "Create dynamic field surveys with conditional logic, multimedia support, and real-time data validation.",
-      color: "bg-teal-500"
-    },
-    {
-      icon: <Shield className="h-8 w-8" />,
-      title: "Role-Based Access Control",
-      description: "Enterprise-grade security with granular permissions, audit trails, and multi-organization support.",
+      description: "Flexible survey creation tools for field research, community engagement, and conservation impact assessment.",
       color: "bg-red-500"
     },
     {
       icon: <Calendar className="h-8 w-8" />,
-      title: "Project Management",
-      description: "Comprehensive project lifecycle management with timeline tracking, resource allocation, and milestone reporting.",
+      title: "Project Timeline Tracking",
+      description: "Comprehensive project management with milestone tracking, resource allocation, and automated progress reporting.",
       color: "bg-indigo-500"
-    },
-    {
-      icon: <Zap className="h-8 w-8" />,
-      title: "Automated Workflows",
-      description: "Intelligent automation for email campaigns, report generation, and stakeholder communications.",
-      color: "bg-yellow-500"
     }
-  ]
+  ], [])
 
-  const stats = [
+  // Memoize stats array
+  const stats = useMemo(() => [
     { number: "50+", label: "Conservation Organizations" },
     { number: "10,000+", label: "Species Tracked" },
     { number: "1M+", label: "Data Points Collected" },
     { number: "99.9%", label: "Platform Uptime" }
-  ]
+  ], [])
 
-  const testimonials = [
+  // Memoize testimonials array
+  const testimonials = useMemo(() => [
     {
       quote: "Substrata.ai has revolutionized how we manage our conservation projects. The real-time data insights have been game-changing.",
       author: "Dr. Sarah Chen",
@@ -81,7 +122,7 @@ export default function Home() {
       role: "Wildlife Program Manager",
       organization: "Forest Guardians"
     }
-  ]
+  ], [])
 
   return (
     <>
@@ -152,10 +193,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-green-600 mb-2">{stat.number}</div>
-                  <div className="text-gray-600">{stat.label}</div>
-                </div>
+                <StatCard key={index} number={stat.number} label={stat.label} />
               ))}
             </div>
           </div>
@@ -175,15 +213,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border">
-                  <div className={`${feature.color} rounded-lg p-3 w-fit mb-4`}>
-                    <div className="text-white">
-                      {feature.icon}
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
+                <FeatureCard key={index} feature={feature} />
               ))}
             </div>
           </div>
@@ -200,21 +230,7 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {testimonials.map((testimonial, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-lg p-8">
-                  <div className="flex items-center mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <blockquote className="text-gray-700 text-lg mb-6">
-                    "{testimonial.quote}"
-                  </blockquote>
-                  <div>
-                    <div className="font-semibold text-gray-900">{testimonial.author}</div>
-                    <div className="text-gray-600">{testimonial.role}</div>
-                    <div className="text-green-600 font-medium">{testimonial.organization}</div>
-                  </div>
-                </div>
+                <TestimonialCard key={index} testimonial={testimonial} />
               ))}
             </div>
           </div>

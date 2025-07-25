@@ -1,42 +1,85 @@
-// Comprehensive Supabase Integration for Conservation Platform
-// This module provides full data persistence and real-time updates
+// Optimized Supabase Integration for Conservation Platform
+// High-performance data management with caching and security
 
 import { createClient } from '@supabase/supabase-js'
 
-// Supabase configuration with your actual project
+// Configuration with performance optimizations
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lyvulonnashmukxedovq.supabase.co'
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5dnVsb25uYXNobXVreGVkb3ZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyNzk1NDIsImV4cCI6MjA2ODg1NTU0Mn0.BIOt9KiMwIrm4sExH01z3BVJIkMyL-GaBsLSIzoUNB4'
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+// Enhanced client configuration for performance
+const supabaseConfig = {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10 // Rate limiting for better performance
+    }
+  },
+  global: {
+    headers: {
+      'x-application-name': 'substrata-conservation-platform'
+    }
+  }
+}
 
 // Validate configuration
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Missing Supabase configuration. Please check your environment variables.')
-} else {
-  console.log('✅ Supabase configuration loaded successfully')
-  console.log('🔗 Connected to:', supabaseUrl)
+  throw new Error('Supabase configuration missing')
 }
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Create optimized Supabase client
+export const supabase = createClient(supabaseUrl, supabaseKey, supabaseConfig)
 
-// Conservation Data Management Class
+// In-memory cache for frequently accessed data
+const dataCache = new Map()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const MAX_CACHE_SIZE = 100
+
+// Cache utilities
+const setCacheItem = (key, data) => {
+  if (dataCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = dataCache.keys().next().value
+    dataCache.delete(firstKey)
+  }
+  dataCache.set(key, { data, timestamp: Date.now() })
+}
+
+const getCacheItem = (key) => {
+  const item = dataCache.get(key)
+  if (!item) return null
+  
+  if (Date.now() - item.timestamp > CACHE_TTL) {
+    dataCache.delete(key)
+    return null
+  }
+  
+  return item.data
+}
+
+// High-performance Conservation Data Manager
 export class ConservationDataManager {
   constructor() {
-    this.isOnline = true;
-    this.localCache = new Map();
-    this.setupConnectionMonitoring();
+    this.isOnline = true
+    this.pendingOperations = []
+    this.setupConnectionMonitoring()
   }
 
-  // Connection monitoring
+  // Optimized connection monitoring
   setupConnectionMonitoring() {
     if (typeof window !== 'undefined') {
       window.addEventListener('online', () => {
-        this.isOnline = true;
-        this.syncPendingChanges();
-      });
+        this.isOnline = true
+        this.processPendingOperations()
+      })
       
       window.addEventListener('offline', () => {
-        this.isOnline = false;
-      });
+        this.isOnline = false
+      })
     }
   }
 
