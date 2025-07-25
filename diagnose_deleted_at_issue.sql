@@ -3,6 +3,66 @@
 -- This will help identify why deleted_at columns are missing or causing errors
 
 -- ========================================
+-- 0. CRITICAL MISSING COLUMNS CHECK
+-- ========================================
+DO $$
+DECLARE
+  missing_columns TEXT[] := '{}';
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '🚨 CRITICAL MISSING COLUMNS CHECK';
+  RAISE NOTICE '=================================';
+  
+  -- Check for project_id in surveys (common cause of errors)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'surveys') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'project_id') THEN
+      RAISE NOTICE '❌ CRITICAL: surveys.project_id column MISSING';
+      missing_columns := array_append(missing_columns, 'surveys.project_id');
+      
+      -- Try to add it
+      BEGIN
+        ALTER TABLE public.surveys ADD COLUMN project_id UUID REFERENCES public.projects(id);
+        RAISE NOTICE '🔧 FIXED: Added project_id to surveys';
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE NOTICE '⚠️ FAILED to add project_id to surveys: %', SQLERRM;
+      END;
+    ELSE
+      RAISE NOTICE '✅ surveys.project_id exists';
+    END IF;
+  END IF;
+  
+  -- Check for name in projects (needed for indexes)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'projects') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'name') THEN
+      RAISE NOTICE '❌ CRITICAL: projects.name column MISSING';
+      missing_columns := array_append(missing_columns, 'projects.name');
+      
+      -- Try to add it
+      BEGIN
+        ALTER TABLE public.projects ADD COLUMN name TEXT;
+        RAISE NOTICE '🔧 FIXED: Added name to projects';
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE NOTICE '⚠️ FAILED to add name to projects: %', SQLERRM;
+      END;
+    ELSE
+      RAISE NOTICE '✅ projects.name exists';
+    END IF;
+  END IF;
+  
+  IF array_length(missing_columns, 1) > 0 THEN
+    RAISE NOTICE '';
+    RAISE NOTICE '⚠️ Found % critical missing columns. These may cause migration errors.', array_length(missing_columns, 1);
+  ELSE
+    RAISE NOTICE '';
+    RAISE NOTICE '✅ All critical columns present.';
+  END IF;
+  
+  RAISE NOTICE '';
+END $$;
+
+-- ========================================
 -- 1. CURRENT SCHEMA ANALYSIS
 -- ========================================
 DO $$

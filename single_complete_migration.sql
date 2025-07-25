@@ -33,7 +33,7 @@ BEGIN
       FROM information_schema.columns 
       WHERE table_schema = 'public' 
       AND table_name = table_record.tablename
-      AND column_name IN ('created_by', 'deleted_at', 'organization')
+      AND column_name IN ('created_by', 'deleted_at', 'organization', 'project_id', 'name', 'created_at', 'updated_at')
       ORDER BY column_name
     LOOP
       RAISE NOTICE '    - Column: % (type: %)', column_record.column_name, column_record.data_type;
@@ -98,6 +98,14 @@ BEGIN
     RAISE NOTICE '✅ Added created_by to surveys';
   ELSE
     RAISE NOTICE 'ℹ️ Column created_by already exists in surveys';
+  END IF;
+  
+  -- Add project_id column if missing
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'project_id') THEN
+    ALTER TABLE public.surveys ADD COLUMN project_id UUID REFERENCES public.projects(id);
+    RAISE NOTICE '✅ Added project_id to surveys';
+  ELSE
+    RAISE NOTICE 'ℹ️ Column project_id already exists in surveys';
   END IF;
   
   -- Add soft delete column
@@ -176,6 +184,82 @@ BEGIN
       RAISE NOTICE 'ℹ️ Table % does not exist, will be created later', table_name_var;
     END IF;
   END LOOP;
+END $$;
+
+-- ========================================
+-- 2.6. ADD ALL MISSING FOREIGN KEY COLUMNS
+-- ========================================
+-- Ensure all tables have necessary foreign key relationships
+DO $$
+BEGIN
+  RAISE NOTICE '🔗 Adding missing foreign key columns...';
+  
+  -- Add project_id to surveys if missing (surveys belong to projects)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'surveys') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'project_id') THEN
+      ALTER TABLE public.surveys ADD COLUMN project_id UUID REFERENCES public.projects(id);
+      RAISE NOTICE '✅ Added project_id to surveys';
+    ELSE
+      RAISE NOTICE 'ℹ️ Column project_id already exists in surveys';
+    END IF;
+  END IF;
+  
+  -- Add organization to surveys if missing (for multi-tenant support)
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'surveys') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'organization') THEN
+      ALTER TABLE public.surveys ADD COLUMN organization TEXT;
+      RAISE NOTICE '✅ Added organization to surveys';
+    ELSE
+      RAISE NOTICE 'ℹ️ Column organization already exists in surveys';
+    END IF;
+  END IF;
+  
+  -- Add any other missing essential columns for existing tables
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_profiles') THEN
+    -- Ensure user_profiles has all required columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_profiles' AND column_name = 'created_at') THEN
+      ALTER TABLE public.user_profiles ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+      RAISE NOTICE '✅ Added created_at to user_profiles';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_profiles' AND column_name = 'updated_at') THEN
+      ALTER TABLE public.user_profiles ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+      RAISE NOTICE '✅ Added updated_at to user_profiles';
+    END IF;
+  END IF;
+  
+  -- Ensure projects has all required columns
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'projects') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'created_at') THEN
+      ALTER TABLE public.projects ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+      RAISE NOTICE '✅ Added created_at to projects';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'updated_at') THEN
+      ALTER TABLE public.projects ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+      RAISE NOTICE '✅ Added updated_at to projects';
+    END IF;
+    
+    -- Ensure projects has name column (referenced in indexes)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'projects' AND column_name = 'name') THEN
+      ALTER TABLE public.projects ADD COLUMN name TEXT;
+      RAISE NOTICE '✅ Added name to projects';
+    END IF;
+  END IF;
+  
+  -- Ensure surveys has all required columns
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'surveys') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'created_at') THEN
+      ALTER TABLE public.surveys ADD COLUMN created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+      RAISE NOTICE '✅ Added created_at to surveys';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'surveys' AND column_name = 'updated_at') THEN
+      ALTER TABLE public.surveys ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+      RAISE NOTICE '✅ Added updated_at to surveys';
+    END IF;
+  END IF;
+  
 END $$;
 
 -- ========================================
