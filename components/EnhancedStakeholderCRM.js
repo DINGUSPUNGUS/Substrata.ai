@@ -8,9 +8,10 @@ import {
   DollarSign, Award, Handshake, Camera, Link2, BookOpen
 } from 'lucide-react'
 import { dataManager } from '../utils/supabaseManager'
+import conservationData from '../utils/conservationData'
 
 export default function EnhancedStakeholderCRM() {
-  const [contacts, setContacts] = useState([])
+  const [contacts, setContacts] = useState(conservationData.stakeholders || [])
   const [organizations, setOrganizations] = useState([])
   const [interactions, setInteractions] = useState([])
   const [selectedContact, setSelectedContact] = useState(null)

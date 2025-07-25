@@ -6,10 +6,11 @@ import {
   Users, Leaf, Bug, Fish, Bird, TreePine, Flower, Globe
 } from 'lucide-react'
 import { dataManager } from '../utils/supabaseManager'
+import conservationData from '../utils/conservationData'
 
 export default function EnhancedSurveyDataManager() {
-  const [surveys, setSurveys] = useState([])
-  const [filteredSurveys, setFilteredSurveys] = useState([])
+  const [surveys, setSurveys] = useState(conservationData.surveys || [])
+  const [filteredSurveys, setFilteredSurveys] = useState(conservationData.surveys || [])
   const [selectedSurvey, setSelectedSurvey] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)

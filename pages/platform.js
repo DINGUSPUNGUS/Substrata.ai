@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { 
   Database, Users, FileText, MapPin, Settings, BarChart3,
   Calendar, Activity, Mail, Target, Layers, Zap, Shield,
-  Clock, Eye, Bell
+  Clock, Eye, Bell, TrendingUp, Globe
 } from 'lucide-react'
+import ConservationDashboard from '../components/ConservationDashboard'
 import EnhancedSurveyDataManager from '../components/EnhancedSurveyDataManager'
 import EnhancedCustomFormBuilder from '../components/EnhancedCustomFormBuilder'
 import EnhancedProjectSiteManager from '../components/EnhancedProjectSiteManager'
@@ -13,6 +14,10 @@ import TimelineChangeTracking from '../components/TimelineChangeTracking'
 import RoleBasedAccessControl from '../components/RoleBasedAccessControl'
 import AutomatedEmailSystem from '../components/AutomatedEmailSystem'
 import ActivityLogger from '../components/ActivityLogger'
+import AdvancedAnalyticsDashboard from '../components/AdvancedAnalyticsDashboard'
+import ConservationMetrics from '../components/ConservationMetrics'
+import GoalProgressTracking from '../components/GoalProgressTracking'
+import LiveDataIntegration from '../components/LiveDataIntegration'
 
 export default function ConservationPlatform() {
   const [activeModule, setActiveModule] = useState('dashboard')
@@ -20,33 +25,57 @@ export default function ConservationPlatform() {
   const modules = [
     {
       id: 'dashboard',
-      name: 'Platform Overview',
+      name: 'Conservation Impact Dashboard',
+      icon: Globe,
+      description: 'Real-time global conservation metrics and live project data'
+    },
+    {
+      id: 'analytics',
+      name: 'Advanced Analytics',
+      icon: TrendingUp,
+      description: 'Comprehensive conservation analytics and reporting'
+    },
+    {
+      id: 'metrics',
+      name: 'Conservation Metrics',
       icon: BarChart3,
-      description: 'Complete conservation management suite'
+      description: 'Key performance indicators and impact measurement'
+    },
+    {
+      id: 'goals',
+      name: 'Goal Progress Tracking',
+      icon: Target,
+      description: 'Monitor conservation goals and milestone achievement'
     },
     {
       id: 'surveys',
       name: 'Survey Data Manager',
       icon: Database,
-      description: 'Enhanced field data collection system'
+      description: 'Enhanced field data collection with real conservation examples'
     },
     {
       id: 'forms',
       name: 'Form Builder',
       icon: FileText,
-      description: 'Dynamic form creation with GPS & validation'
+      description: 'Dynamic survey creation with GPS validation'
     },
     {
       id: 'projects',
       name: 'Project & Site Manager',
       icon: MapPin,
-      description: 'GPS polygon drawing & site management'
+      description: 'Geographic project management with polygon mapping'
     },
     {
       id: 'crm',
       name: 'Stakeholder CRM',
       icon: Users,
-      description: 'Complete relationship management system'
+      description: 'Complete donor and partner relationship management'
+    },
+    {
+      id: 'data',
+      name: 'Live Data Integration',
+      icon: Globe,
+      description: 'Connect to global conservation databases and APIs'
     },
     {
       id: 'gis',
@@ -222,6 +251,14 @@ export default function ConservationPlatform() {
 
   const renderActiveModule = () => {
     switch (activeModule) {
+      case 'dashboard':
+        return <ConservationDashboard />
+      case 'analytics':
+        return <AdvancedAnalyticsDashboard />
+      case 'metrics':
+        return <ConservationMetrics />
+      case 'goals':
+        return <GoalProgressTracking />
       case 'surveys':
         return <EnhancedSurveyDataManager />
       case 'forms':
@@ -230,6 +267,8 @@ export default function ConservationPlatform() {
         return <EnhancedProjectSiteManager />
       case 'crm':
         return <EnhancedStakeholderCRM />
+      case 'data':
+        return <LiveDataIntegration />
       case 'gis':
         return <InteractiveGISMapping />
       case 'timeline':
@@ -241,7 +280,7 @@ export default function ConservationPlatform() {
       case 'audit':
         return <ActivityLogger />
       default:
-        return renderDashboard()
+        return <ConservationDashboard />
     }
   }
 
