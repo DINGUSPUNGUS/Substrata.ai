@@ -16,6 +16,19 @@ build/
 .env.test.local
 .env.production.local
 
+# ALL environment files (security)
+.env*
+!.env.example
+!.env.template
+
+# Security files
+*.key
+*.pem
+*.crt
+config/secrets.json
+*.jwt
+*.token
+
 # Vercel
 .vercel
 
